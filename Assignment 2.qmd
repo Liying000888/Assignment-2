@@ -4,6 +4,7 @@ format: html
 editor: visual
 embed-resources: true
 ---
+
 Name:LIYING DENG
 
 ```{r}
@@ -11,8 +12,9 @@ library(dplyr)
 library(data.table)
 library(ggplot2)
 ```
-#Part 1- Question 1 After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches.
-In the case of missing values, impute data using the average amongst individuals with the same values for the “male” and “hispanic” variables. For categorical variables, take the mode. If you are interested (and feel adventurous) in the theme of Data Imputation, take a look at this paper on “Multiple Imputation” using the Amelia R package here.
+
+#Part 1- Question 1 After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches. In the case of missing values, impute data using the average amongst individuals with the same values for the “male” and “hispanic” variables. For categorical variables, take the mode. If you are interested (and feel adventurous) in the theme of Data Imputation, take a look at this paper on “Multiple Imputation” using the Amelia R package here.
+
 ```{r}
 library(dplyr)
 library(data.table) 
@@ -21,11 +23,8 @@ individual_data <- data.table::fread("/Users/kristydeng/Downloads/chs_individual
 regional_data <- data.table::fread("/Users/kristydeng/Downloads/chs_regional.csv")
 combined_data <- merge(individual_data, regional_data, by = "townname")
 nrow(combined_data)
-# Check for duplicates
 duplicated_rows <- combined_data[duplicated(combined_data), ]
-# Remove duplicates if necessary
 combined_data <- combined_data[!duplicated(combined_data), ]
-# Check the number of rows before and after removing duplicates
 numeric_cols <- c("agepft", "height", "weight", "bmi", "fev", "fvc", "mmef", "pm2_5_fr", "no_24hr")
 categorical_cols <- c("asthma", "active_asthma", "father_asthma", "mother_asthma", 
                       "wheeze", "hayfever", "allergy", "educ_parent", "smoke", 
@@ -41,11 +40,11 @@ combined_data <- combined_data %>%
          across(where(is.numeric), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .))
          )
 ```
-#Part 1 - Question 2 Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24). To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+
+#Part 1 - Question 2 Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI\<14; normal BMI 14-22; overweight BMI 22-24; obese BMI\>24). To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+
 ```{r}
 library(dplyr)
-# Assuming the dataset already has a 'BMI' column
-# Create a new categorical variable 'obesity_level' based on BMI values
 combined_data <- combined_data %>%
   mutate(obesity_level = case_when(
     bmi < 14 ~ "underweight",
@@ -54,32 +53,32 @@ combined_data <- combined_data %>%
     bmi > 24 ~ "obese",
     TRUE ~ NA_character_  # Handle missing BMI values
   ))
-# Create a summary table with minimum BMI, maximum BMI, and the total number of observations per category
 obesity_summary <- combined_data %>%
   group_by(obesity_level) %>%
   summarise(
-    min_bmi = ifelse(all(is.na(bmi)), NA, min(bmi, na.rm = TRUE)),   # Replace Inf with NA
-    max_bmi = ifelse(all(is.na(bmi)), NA, max(bmi, na.rm = TRUE)),   # Replace -Inf with NA
+    min_bmi = ifelse(all(is.na(bmi)), NA, min(bmi, na.rm = TRUE)),   
+    max_bmi = ifelse(all(is.na(bmi)), NA, max(bmi, na.rm = TRUE)),   
     total_obs = n()
   )
-# View the summary table
 print(obesity_summary)
 ```
+
 #Part 1 - Question 3 Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove.” The variable should have four categories in total.
+
 ```{r}
-# Check the column names and replace 'second_hand_smoke' and 'gas_stove' with the actual column names
 combined_data <- combined_data %>%
   mutate(smoke_gas_exposure = case_when(
-    `smoke` == 0 & `gasstove` == 0 ~ "Neither",               # Replace with actual column names
-    `smoke` == 1 & `gasstove` == 0 ~ "Only Second-Hand Smoke", # Replace with actual column names
-    `smoke` == 0 & `gasstove` == 1 ~ "Only Gas Stove",         # Replace with actual column names
-    `smoke` == 1 & `gasstove` == 1 ~ "Both",                   # Replace with actual column names
-    TRUE ~ NA_character_  # Handle missing values
+    `smoke` == 0 & `gasstove` == 0 ~ "Neither",              
+    `smoke` == 1 & `gasstove` == 0 ~ "Only Second-Hand Smoke", 
+    `smoke` == 0 & `gasstove` == 1 ~ "Only Gas Stove",         
+    `smoke` == 1 & `gasstove` == 1 ~ "Both",                   
+    TRUE ~ NA_character_  
   ))
-# View the distribution of the new variable
 table(combined_data$smoke_gas_exposure)
 ```
+
 #Part 1 - Question 4 Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiratory volume in 1 second (ml)” (an asthma indicator) by town, sex, obesity level, and “smoke_gas_exposure.”
+
 ```{r}
 library(dplyr)
 # 1. Summary table by town
@@ -119,8 +118,8 @@ summary_by_obesity
 summary_by_smoke_gas_exposure
 ```
 
-Part 2 - Looking at the Data (EDA)
-#What is the association between BMI and FEV (forced expiratory volume)?
+Part 2 - Looking at the Data (EDA) #What is the association between BMI and FEV (forced expiratory volume)?
+
 ```{r}
 model <- lm(fev ~ bmi, data = combined_data)
 summary(model)
@@ -132,7 +131,9 @@ model <- lm(fev ~ bmi, data = combined_data)
 summary(model)
 ###Conclusion: P value less than 0.05, BMI has a significant positive association with FEV.
 ```
+
 #What is the association between smoke and gas exposure and FEV?
+
 ```{r}
 anova_model <- aov(fev ~ smoke_gas_exposure, data = combined_data)
 summary(anova_model)
@@ -142,7 +143,9 @@ ggplot(combined_data, aes(x = smoke_gas_exposure, y = fev)) +
   theme_minimal()
 ###Conclusion: The ANOVA test shows that there is no statistically significant association between smoke and gas exposure and FEV (p = 0.525).
 ```
+
 #What is the association between PM2.5 exposure and FEV?
+
 ```{r}
   summary_pm25_fev <- combined_data %>%
   summarise(
@@ -162,19 +165,21 @@ ggplot(combined_data, aes(x = pm25_mass, y = fev)) +
 ###Conclusion:P value less than 0.05, there is a significant negative association between PM2.5 exposure and FEV （P=0.01096)
 ```
 
-Part 3 Visualization
-#Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”
+Part 3 Visualization #Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”
+
 ```{r}
 library(ggplot2)
-ggplot(combined_data, aes(x = bmi, y = fev)) +  # Assuming 'BMI' and 'fev1' are the correct column names
-  geom_point(alpha = 0.6) +  # Add scatter points
-  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add regression lines
-  facet_wrap(~ townname) +  # Facet by townname
+ggplot(combined_data, aes(x = bmi, y = fev)) +  
+  geom_point(alpha = 0.6) + 
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  
+  facet_wrap(~ townname) +  
   labs(title = "BMI vs FEV by Town", x = "bmi", y = "fev") +
   theme_minimal()
 ###Interpret: There is a positive association between BMI and FEV. As BMI increases, FEV also increase because many of the towns (like Alpine, Lancaster, Long Beach, Riverside, San Dimas,etc.) there is a positive slope.
 ```
+
 #Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure
+
 ```{r}
 library(ggplot2)
 combined_data <- combined_data %>%
@@ -191,9 +196,10 @@ ggplot(combined_data, aes(x = fev, fill = bmi_category)) +
   theme_minimal()
 ###Interpret：The distribution follows a bell-shaped curve (normal distribution). BMI individuals peaking around 2000 ml FEV. Obese and overweight individuals tend to have slightly higher FEV values, while underweight individuals mostly have lower FEV values.
 ```
+
 #Stacked histograms of FEV by smoke/gas exposure
+
 ```{r}
-# Stacked histogram of FEV by smoke/gas exposure
 ggplot(combined_data, aes(x = fev, fill = smoke_gas_exposure)) +
   geom_histogram(position = "stack", binwidth = 100, color = "black") +
   labs(title = "FEV by Smoke/Gas Exposure", x = "fev", y = "Count", fill = "Smoke/Gas Exposure") +
@@ -202,32 +208,37 @@ ggplot(combined_data, aes(x = fev, fill = smoke_gas_exposure)) +
 ```
 
 #Barchart of BMI by smoke/gas exposure
+
 ```{r}
 ggplot(combined_data, aes(x = smoke_gas_exposure, fill = obesity_level)) +
-  geom_bar(position ="dodge") +  # Use the actual BMI values for the height of the bars
+  geom_bar(position ="dodge") +  
   labs(title = "BMI by Smoke/Gas Exposure", x = "Smoke/Gas Exposure", y = "Count") +
   theme_minimal()
 ###Interpret: normal BMI are the most prevalent across all smoke/gas exposure categories, particularly in the Only Gas Stove and Neither groups. While there is representation of both overweight and obese individuals in each category, their numbers are smaller compared to those in the normal BMI group.
 ```
+
 #Statistical summary graphs of FEV by BMI
+
 ```{r}
-# Boxplot of FEV by BMI category
 ggplot(combined_data, aes(x = bmi_category, y = fev, fill = bmi_category)) +
   geom_boxplot() +
   labs(title = "fev by bmi Category", x = "bmi Category", y = "fev") +
   theme_minimal()
 ###Interpret:The boxplot suggests that individuals in the obese and overweight categories tend to have higher median FEV values compared to those in the normal and underweight groups. The boxplots for FEV by BMI and smoke/gas exposure visually summarize the variability across different groups, with clear indicators of the central tendency (median) and spread (interquartile range)
 ```
+
 #Statistical summary graphs of FEV by Smoke/Gas Exposure
+
 ```{r}
-# Boxplot of FEV by smoke/gas exposure
 ggplot(combined_data, aes(x = smoke_gas_exposure, y = fev, fill = smoke_gas_exposure)) +
   geom_boxplot() +
   labs(title = "FEV by Smoke/Gas Exposure", x = "Smoke/Gas Exposure", y = "FEV (ml)", fill = "Smoke/Gas Exposure") +
   theme_minimal()
 ### Interpret: All categories have similar median FEV values,but only second-hand smoke tend to have slightly lower on average.Outliers are present in each group, indicating variability in FEV among individuals in each exposure category.
 ```
+
 #A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities
+
 ```{r}
 library(leaflet)
 pal <- colorNumeric(palette = c("green", "pink", "blue"), domain = combined_data$pm25_mass)
@@ -243,12 +254,14 @@ leaflet(combined_data) %>%
   addLegend(
     position = "bottomright",
     title = "PM2.5 Concentration",
-    pal = pal,  # Use the color palette
+    pal = pal,  
     values = ~pm25_mass
   )
 ###Interpret:The colored circles represent different levels of PM2.5 concentrations, with the size and color indicating the intensity of the pollution, Green represents lower levels of PM2.5 concentration, Pink represents moderate levels of PM2.5 concentration, Blue represents higher levels of PM2.5 concentration.Larger and darker circles (like blue) indicate the town of Mira Lowa higher concentrations of PM2.5 value reaches 29.97.
 ```
+
 ## Scatterplot of PM2.5 mass vs FEV
+
 ```{r}
 ggplot(combined_data, aes(x = pm25_mass, y = fev)) +
   geom_point(alpha = 0.6) +
@@ -257,4 +270,3 @@ ggplot(combined_data, aes(x = pm25_mass, y = fev)) +
   theme_minimal()
 ###Interpret: there is a negative association between PM2.5 mass and FEV because the pink line shows the negative trends slope.
 ```
-
